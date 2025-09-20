@@ -26,9 +26,11 @@
             background-color: var(--light-color);
             color: var(--dark-color);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
             min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
@@ -38,9 +40,10 @@
             background-color: white;
             border-radius: 15px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
 
-        .form-title {
+        .form-title, .list-title {
             font-size: 24px;
             font-weight: bold;
             text-align: center;
@@ -68,9 +71,8 @@
             background-color: var(--light-color);
         }
         
-        input[type="date"],
-        input[type="time"] {
-            font-family: 'Tajawal', sans-serif;
+        input[type="password"] {
+            -webkit-text-security: disc;
         }
 
         .btn {
@@ -85,13 +87,21 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
+        
+        .confirm-btn {
+            background-color: var(--accent-color);
+        }
 
         .btn:hover {
             background-color: #5a4bce;
         }
         
+        .confirm-btn:hover {
+            background-color: #00b48b;
+        }
+        
         .btn:disabled {
-            background-color: #A29BFE;
+            background-color: var(--secondary-color);
             cursor: not-allowed;
         }
 
@@ -126,6 +136,54 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+
+        .members-list {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .member-item:last-child {
+            border-bottom: none;
+        }
+
+        .member-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .member-info span {
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .member-info small {
+            color: #888;
+        }
+
+        .member-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .member-actions .form-select {
+            width: 150px;
+            font-size: 14px;
+            padding: 8px;
+        }
     </style>
 </head>
 <body>
@@ -133,7 +191,6 @@
     <div class="container">
         <h2 class="form-title">إضافة عضو جديد</h2>
         <div id="alert-message"></div>
-
         <div class="form-group">
             <label for="username">اسم المستخدم</label>
             <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم">
@@ -157,6 +214,13 @@
         <button id="add-member-btn" class="btn">إضافة العضو</button>
     </div>
 
+    <div class="members-list">
+        <h2 class="list-title">قائمة الأعضاء</h2>
+        <div id="members-container">
+            <div style="text-align: center; color: #888;">جاري تحميل الأعضاء...</div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
@@ -164,14 +228,14 @@
     <script>
         // تهيئة Firebase
         const firebaseConfig = {
-    apiKey: 'AIzaSyC8Zd01zFsuYrKliskjkm2epaghD0IPI0w',
-    appId: '1:485361720518:web:cc5aad094d27acad038bc7',
-    messagingSenderId: '485361720518',
-    projectId: 'k4afa-9a62a',
-    authDomain: 'k4afa-9a62a.firebaseapp.com',
-    databaseURL: 'https://k4afa-9a62a-default-rtdb.firebaseio.com',
-    storageBucket: 'k4afa-9a62a.firebasestorage.app',
-    measurementId: 'G-WF72558LHK',
+            apiKey: 'AIzaSyC8Zd01zFsuYrKliskjkm2epaghD0IPI0w',
+            appId: '1:485361720518:web:cc5aad094d27acad038bc7',
+            messagingSenderId: '485361720518',
+            projectId: 'k4afa-9a62a',
+            authDomain: 'k4afa-9a62a.firebaseapp.com',
+            databaseURL: 'https://k4afa-9a62a-default-rtdb.firebaseio.com',
+            storageBucket: 'k4afa-9a62a.firebasestorage.app',
+            measurementId: 'G-WF72558LHK',
         };
         firebase.initializeApp(firebaseConfig);
 
@@ -184,6 +248,7 @@
         const yearSelect = document.getElementById('year');
         const addMemberBtn = document.getElementById('add-member-btn');
         const alertMessageDiv = document.getElementById('alert-message');
+        const membersContainer = document.getElementById('members-container');
 
         const yearDomains = {
             'براعم': '@baraem.com',
@@ -191,8 +256,9 @@
             'فتيان': '@fityan.com',
             'متقدم': '@motaqadim.com',
             'جوالة': '@jawala.com',
-            'قادة': '@motasaribin.com'
+            'قادة': '@qada.com'
         };
+        const allYears = ['براعم', 'اشبال', 'فتيان', 'متقدم', 'جوالة', 'قادة'];
 
         function showAlert(message, type = 'success') {
             alertMessageDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
@@ -222,16 +288,13 @@
             addMemberBtn.innerHTML = '<span class="loading-spinner"></span>';
 
             try {
-                // استخدام Firebase Auth لإنشاء المستخدم
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
 
-                // تخزين البيانات في Firebase Realtime Database
                 await usersRef.child(uid).set({
                     email: email,
-                    password: password, 
+                    year: year,
                     isDisabled: false,
-                    year: year
                 });
 
                 showAlert('تمت إضافة العضو بنجاح', 'success');
@@ -247,6 +310,64 @@
                 addMemberBtn.innerHTML = 'إضافة العضو';
             }
         }
+
+        function renderMembers(members) {
+            membersContainer.innerHTML = '';
+            if (Object.keys(members).length === 0) {
+                membersContainer.innerHTML = '<div style="text-align: center; color: #888;">لا يوجد أعضاء مسجلين.</div>';
+                return;
+            }
+
+            Object.keys(members).forEach(uid => {
+                const member = members[uid];
+                const memberItem = document.createElement('div');
+                memberItem.className = 'member-item';
+                memberItem.innerHTML = `
+                    <div class="member-info">
+                        <span>${member.email.split('@')[0]}</span>
+                        <small>المرحلة: ${member.year}</small>
+                    </div>
+                    <div class="member-actions">
+                        <select class="form-select" data-uid="${uid}">
+                            ${allYears.map(year => `
+                                <option value="${year}" ${member.year === year ? 'selected' : ''}>${year}</option>
+                            `).join('')}
+                        </select>
+                        <button class="btn confirm-btn" data-uid="${uid}">تأكيد</button>
+                    </div>
+                `;
+                membersContainer.appendChild(memberItem);
+            });
+
+            // إضافة مُستمع للزر "تأكيد"
+            document.querySelectorAll('.member-actions .confirm-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const uid = e.target.dataset.uid;
+                    const selectElement = e.target.closest('.member-actions').querySelector('.form-select');
+                    const newYear = selectElement.value;
+                    updateMemberYear(uid, newYear);
+                });
+            });
+        }
+
+        async function updateMemberYear(uid, newYear) {
+            try {
+                const memberRef = usersRef.child(uid);
+                await memberRef.update({
+                    year: newYear,
+                });
+                showAlert('تم تحديث المرحلة بنجاح.', 'success');
+            } catch (error) {
+                console.error('Error updating member year:', error);
+                showAlert(`حدث خطأ أثناء تحديث المرحلة: ${error.message}`, 'danger');
+            }
+        }
+        
+        // الاستماع للتغييرات في قائمة الأعضاء
+        usersRef.on('value', (snapshot) => {
+            const members = snapshot.val() || {};
+            renderMembers(members);
+        });
 
         addMemberBtn.addEventListener('click', addMember);
     </script>
