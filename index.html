@@ -29,6 +29,7 @@
             justify-content: center;
             height: 100vh;
             text-align: center;
+            user-select: none; /* لمنع تحديد النصوص */
         }
 
         .form-container {
@@ -122,14 +123,14 @@
     <script>
         // تهيئة Firebase
         const firebaseConfig = {
-apiKey: 'AIzaSyC8Zd01zFsuYrKliskjkm2epaghD0IPI0w',
-appId: '1:485361720518:web:cc5aad094d27acad038bc7',
-messagingSenderId: '485361720518',
-projectId: 'k4afa-9a62a',
-authDomain: 'k4afa-9a62a.firebaseapp.com',
-databaseURL: 'https://k4afa-9a62a-default-rtdb.firebaseio.com',
-storageBucket: 'k4afa-9a62a.firebasestorage.app',
-measurementId: 'G-WF72558LHK',
+            apiKey: 'AIzaSyC8Zd01zFsuYrKliskjkm2epaghD0IPI0w',
+            appId: '1:485361720518:web:cc5aad094d27acad038bc7',
+            messagingSenderId: '485361720518',
+            projectId: 'k4afa-9a62a',
+            authDomain: 'k4afa-9a62a.firebaseapp.com',
+            databaseURL: 'https://k4afa-9a62a-default-rtdb.firebaseio.com',
+            storageBucket: 'k4afa-9a62a.firebasestorage.app',
+            measurementId: 'G-WF72558LHK',
         };
 
         // Initialize Firebase
@@ -173,6 +174,30 @@ measurementId: 'G-WF72558LHK',
         document.getElementById('password-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 checkPassword();
+            }
+        });
+
+        // منع النقر بالزر الأيمن
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // منع مفاتيح الاختصار لأدوات المطور
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault();
+            }
+            // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) {
+                e.preventDefault();
+            }
+            if (e.ctrlKey && e.key === 'U') {
+                e.preventDefault();
+            }
+            // Cmd+Opt+I (Mac)
+            if (e.metaKey && e.altKey && e.key === 'I') {
+                e.preventDefault();
             }
         });
     </script>
