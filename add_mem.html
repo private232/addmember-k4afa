@@ -314,13 +314,22 @@
 
         function renderMembers(members) {
             membersContainer.innerHTML = '';
-            if (Object.keys(members).length === 0) {
-                membersContainer.innerHTML = '<div style="text-align: center; color: #888;">لا يوجد أعضاء مسجلين.</div>';
+            
+            // تصفية الأعضاء: عرض من لديه تصنيف مرحلي (year) فقط
+            const classifiedMembers = Object.keys(members)
+                .filter(uid => members[uid] && members[uid].year)
+                .reduce((obj, uid) => {
+                    obj[uid] = members[uid];
+                    return obj;
+                }, {});
+
+            if (Object.keys(classifiedMembers).length === 0) {
+                membersContainer.innerHTML = '<div style="text-align: center; color: #888;">لا يوجد أعضاء مصنفين مسجلين.</div>';
                 return;
             }
 
-            Object.keys(members).forEach(uid => {
-                const member = members[uid];
+            Object.keys(classifiedMembers).forEach(uid => {
+                const member = classifiedMembers[uid];
                 const memberItem = document.createElement('div');
                 memberItem.className = 'member-item';
                 memberItem.innerHTML = `
